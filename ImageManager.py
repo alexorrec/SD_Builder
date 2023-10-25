@@ -1,10 +1,8 @@
 import os
-
+import Logging
+import Diffusable
 from PIL import Image, ImageDraw, ImageFilter
 from PIL.PngImagePlugin import PngInfo
-
-'''GLOBAL'''
-images_log = '.\\processed_images.txt'
 
 
 def is_image(image_path):
@@ -21,23 +19,6 @@ def is_image(image_path):
         return False
 
 
-def get_last_processed():
-    with open(images_log, 'a+') as file:
-        try:
-            file.seek(-2, os.SEEK_END)
-            while file.read(1) != b'\n':
-                file.seek(-2, os.SEEK_CUR)
-        except OSError:
-            file.seek(0)
-        last_line = file.readline()
-    return last_line
-
-
-def write_underPipe(filename):
-    with open(images_log, 'a+') as file:
-        file.write(filename)
-
-
 class ImageManager:
 
     def __init__(self, in_path: str, out_path: str):
@@ -45,9 +26,11 @@ class ImageManager:
         self.out_path: str = out_path
         self.images_path: list[str] = list()
 
-        self.last_processed: str = get_last_processed()  # un path però
         self.filename: str = ''
         self.mask_size: int = 1024
+
+    def set_mask_size(self, size: int):
+        self.mask_size = size
 
     def list_images(self):
         for file in os.listdir(self.in_path):
@@ -64,8 +47,17 @@ class ImageManager:
         self.filename = im.filename[0: im.filename.index('.') - 1]
         return im
 
-    def set_mask_size(self, size):
-        self.mask_size = size
+    def send_toPipe(self, model: str):
+        # Generate 5 Masks
+        # TODO logic for generating 5 masks
+        mask_list: list[Image] = list()
 
-    def send_toPipe(self):
-        pass
+
+        diffuse = Diffusable.Diffusable(model)
+
+        inpainted_images: list[Image] = list()
+
+        for mask in mask_list:
+            diffuse.set_mask(mask)
+            inpainted_images.append(diffuse.do_inpaint())
+

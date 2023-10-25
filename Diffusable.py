@@ -11,7 +11,6 @@ in output l'immagine su cui è stato fatto l'inpaiting ed i suoi metadati'''
 class Diffusable:
 
     def __init__(self, model, negative_prompt=None, prompt=None):
-        assert model
         self.model_path = model
         self.prompt = prompt
         self.negative_prompt = negative_prompt
@@ -24,6 +23,9 @@ class Diffusable:
         self.guidance_scale: float = 7.5
         self.generator: torch.Generator = None
         self.inpainted: Image
+
+    def set_meta(self, **kwargs):
+        pass
 
     def set_inference_step(self, steps: int):
         self.inference_steps = steps
