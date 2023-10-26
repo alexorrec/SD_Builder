@@ -13,15 +13,13 @@ def import_txt():
 
 
 def import_last_processed():
-    with open(images_log, 'a+') as file:
-        try:
-            file.seek(-2, os.SEEK_END)
-            while file.read(1) != b'\n':
-                file.seek(-2, os.SEEK_CUR)
-        except OSError:
-            file.seek(0)
-        last_line = file.readline()
-    return last_line
+    try:
+        with open(images_log, 'rb') as file:
+            for line in file:
+                pass
+        return line.decode()
+    except:
+        return None
 
 
 def log_image(filename: str):

@@ -19,24 +19,17 @@ class Diffusable:
 
         self.image_toPipe: Image = None
         self.image_mask: Image = None
-        self.inference_steps: int = 35
-        self.guidance_scale: float = 7.5
+        self.inference_steps: int = None
+        self.guidance_scale: float = None
         self.generator: torch.Generator = None
         self.inpainted: Image
 
-    def set_meta(self, **kwargs):
-        pass
-
-    def set_inference_step(self, steps: int):
-        self.inference_steps = steps
-
-    def set_guidance_scale(self, scale: float):
-        self.guidance_scale = scale
-
-    def set_generator_seed(self, seed: int):
+    def set_meta(self, seed: int, inference_steps=35, guidance_scale=7.5):
         self.generator = torch.Generator(device='cuda').manual_seed(seed)
+        self.inference_steps = inference_steps
+        self.guidance_scale = guidance_scale
 
-    def set_image(self, image: Image):
+    def set_image_topipe(self, image: Image):
         self.image_toPipe = image
 
     def set_mask(self, image: Image):
