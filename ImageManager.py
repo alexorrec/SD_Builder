@@ -28,16 +28,21 @@ class ImageManager:
 
         self.mask_size: int = 1024
         self.logger = Logging.Logger()
+        self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                msg=f'Input Path: {self.in_path}', msg2=f'Output Path: {self.out_path}')
         self.build_list()
 
     def build_list(self):
         try:
+            with open('images_list.txt', 'rb') as file:
+                self.images_path = file.read().decode().split()
             last_processed = self.logger.image_checkpoints
-            self.images_path = self.images_path[self.images_path.index(last_processed):]
-            print(last_processed)
+            self.images_path = self.images_path[self.images_path.index(last_processed) + 1:]
+            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                    msg=f'Last Processed retrieved: {last_processed}')
         except Exception as e:
+            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(), msg=str(e))
             self.list_images()
-            print(e)
 
     def list_images(self):
         with open('images_list.txt', 'a+') as file:
@@ -46,6 +51,8 @@ class ImageManager:
                     _inapp = os.path.join(self.in_path, _file)
                     self.images_path.append(_inapp)
                     file.write(_inapp + "\n")
+        self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                msg=f'ImagesList Created!')
 
     def set_mask_size(self, size: int):
         self.mask_size = size
@@ -77,5 +84,8 @@ class ImageManager:
         while self.images_path:
             im, filename = self.load_image()
             # im.show()
-            print('PROCESSING'+filename)
+            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                    msg=f'PROCESSING: {filename}')
             Logging.log_image(filename)
+        self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                msg=f'List processing Ended!')

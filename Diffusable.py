@@ -36,9 +36,12 @@ class Diffusable:
         self.image_toPipe = image
 
     def do_inpaint(self):
-        return self.pipe(prompt=self.prompt, negative_prompt=self.negative_prompt,
-                         image=self.image_toPipe, mask_image=self.image_mask,
-                         generator=self.generator,
-                         height=self.image_toPipe.height, width=self.image_toPipe.width,
-                         num_inference_steps=self.inference_steps,
-                         guidance_scale=self.guidance_scale).images[0]
+        if self.generator:
+            return self.pipe(prompt=self.prompt, negative_prompt=self.negative_prompt,
+                             image=self.image_toPipe, mask_image=self.image_mask,
+                             generator=self.generator,
+                             height=self.image_toPipe.height, width=self.image_toPipe.width,
+                             num_inference_steps=self.inference_steps,
+                             guidance_scale=self.guidance_scale).images[0]
+        else:
+            raise

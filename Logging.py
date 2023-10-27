@@ -1,8 +1,13 @@
 import os
+from inspect import currentframe
 from datetime import datetime
 
 '''GLOBAL'''
-images_log = '.\\processed_images.txt'
+images_log = 'processed_images.txt'
+
+
+def get_caller_name() -> str:
+    return currentframe().f_back.f_code.co_name
 
 
 def import_txt():
@@ -17,8 +22,9 @@ def import_last_processed():
         with open(images_log, 'rb') as file:
             for line in file:
                 pass
-        return line.decode()
-    except:
+        return line.decode().replace('\n', '')
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -52,5 +58,5 @@ class Logger(metaclass=LoggerMeta):
                 msg += ' - ' + args
             with open(self.log_file, 'a+') as file:
                 file.write(msg + '\n')
-        except:
-            print(self.__name__ + 'FAILED WRITING LOG: ' + msg)
+        except Exception as e:
+            print(self.__name__ + ' FAILED WRITING LOG: ' + msg + ' Error: ' + str(e))
