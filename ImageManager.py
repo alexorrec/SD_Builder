@@ -1,6 +1,5 @@
 import os
 import Logging
-
 from PIL import Image, ImageDraw, ImageFilter
 from PIL.PngImagePlugin import PngInfo
 
@@ -65,7 +64,7 @@ class ImageManager:
     def load_image(self):
         filename = self.images_path.pop(0)
         im = Image.open(filename)
-        return im, filename
+        return im, filename, mask_list
 
     def send_toPipe(self, model: str):
         # Generate 5 Masks

@@ -21,8 +21,9 @@ def import_last_processed():
     try:
         with open(images_log, 'rb') as file:
             for line in file:
-                pass
-        return line.decode().replace('\n', '')
+                if line:
+                    _toret = line
+        return _toret.decode().replace('\n', '').replace('\r', '')
     except Exception as e:
         print(e)
         return None
