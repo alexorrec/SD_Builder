@@ -12,10 +12,6 @@ SDV5XL_INPAINT_MODEL_PATH = 'C:/Users/Alessandro/stable-diffusion-xl-1.0-inpaint
 SAVE_PATH = os.path.join(os.environ['USERPROFILE'], "Desktop", "SDV5_OUTPUT/")
 IMAGES_PATH = "C:/Users/Alessandro/Desktop/IMAGES/"
 
-
-
-
-
 pipe = AutoPipelineForInpainting.from_pretrained(SDV5XL_INPAINT_MODEL_PATH, torch_dtype=torch.float16,
                                                  variant="fp16").to('cuda')
 
@@ -44,7 +40,7 @@ for file in os.listdir(IMAGES_PATH):
     # Resize to 2048Width
     aspect_ratio = base_img.height / base_img.width
 
-    _ToPipe = base_img.resize((2048, int(2048*aspect_ratio)), Image.LANCZOS)
+    _ToPipe = base_img.resize((2048, int(2048 * aspect_ratio)), Image.LANCZOS)
     # _ToPipe.show()
 
     # 512x512 square on Center mask, to_inpaint
@@ -62,14 +58,14 @@ for file in os.listdir(IMAGES_PATH):
     seed: int = generate_seed()
     generator = torch.Generator(device='cuda').manual_seed(seed)
 
-    synt_img = pipe(prompt=prompt, negative_prompt =negative_prompt,
+    synt_img = pipe(prompt=prompt, negative_prompt=negative_prompt,
                     image=_ToPipe, mask_image=mask_img,
                     generator=generator,
                     height=_ToPipe.height, width=_ToPipe.width,
                     num_inference_steps=inference_steps,
                     guidance_scale=guidance_scale).images[0]
 
-    #base_img.paste(synt_img, crop_xy)
+    # base_img.paste(synt_img, crop_xy)
 
     # Saving png + writing some meta
     meta = PngInfo()
