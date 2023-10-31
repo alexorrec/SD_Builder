@@ -12,7 +12,7 @@ in output l'immagine su cui è stato fatto l'inpaiting ed i suoi metadati'''
 
 class Diffusable:
 
-    def __init__(self, model_path, negative_prompt=None, prompt=None):
+    def __init__(self, model_path, prompt=None, negative_prompt=None):
         self.prompt = prompt
         self.negative_prompt = negative_prompt
         self.pipe = AutoPipelineForInpainting.from_pretrained(model_path,

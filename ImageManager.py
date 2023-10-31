@@ -1,6 +1,5 @@
 import os
 import random
-import threading
 import Diffusable
 import Logging
 from PIL import Image, ImageDraw, ImageFilter
@@ -82,13 +81,23 @@ class ImageManager:
                                 tag='DEBUG',
                                 msg='ImagesList Created!')
 
-    # TODO: choose a nomenclature for saving masks & ouputted images
-    def save_image(self, image: Image, metadata: PngInfo, tag=''):
+    def save_image(self, image: Image, mask: Image, tag, metadata: PngInfo = None):
         """
-        Shoot this as an event? - to run in a separate Thread, manage the creation of a folder for each image
-        every folder containig the original image + the xyz synth images + xyz masks associated, each of them with the PngInfo
+        Create a folder for each processed image, save each generated image + meta + relative mask
         """
-        image.save(image.filename + 'ciao.jpg', pnginfo=metadata)
+
+        filename = os.path.normpath(image.filename)
+        filename = filename.split(os.sep)[-1].replace('.jpg', '')
+
+        if os.path.isdir(os.path.join(self.out_path, filename)):
+            tmp_out = os.path.join(self.out_path, filename)
+            filename = filename + '_' + tag
+            image.save(os.path.join(tmp_out, filename + '.png'),
+                       pnginfo=metadata)
+            mask.save(os.path.join(tmp_out, filename + 'mask' + '.png'))
+        else:
+            os.mkdir(os.path.join(self.out_path, filename))
+            self.save_image(image, mask, tag, metadata)
 
     def load_image(self):
         """
@@ -98,34 +107,44 @@ class ImageManager:
         """
         filename = self.images_path.pop(0)
         im = Image.open(filename)
+        """ONLY FOR DEBUG PURPOSES: RESIZE IMAGE"""
+        aspect_ratio = im.height / im.width
+        _ToPipe = im.resize((1024, int(1024 * aspect_ratio)), Image.LANCZOS)
+        im = _ToPipe
+        """END DEBUG"""
         masks = self.generate_masks(im)
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Loading Image & Building masks: {filename}')
         return im, masks
 
-    def send_toPipe(self, model: str = 'SDV5', mask_size: int = 1024, n_masks: int = 1):
+    def start_diffuse(self, model: str = 'SDV5', mask_size: int = 1024, n_masks: int = 1, prompt='', negative_prompt=''):
         try:
-            #diffuser = Diffusable.Diffusable(model, prompt='', negative_prompt='')
+            diffuser = Diffusable.Diffusable(model, prompt=prompt, negative_prompt=negative_prompt)
 
             while self.images_path:
                 self.mask_size = mask_size
                 self.n_masks = n_masks
 
                 _toInpaint, masks = self.load_image()
-                #diffuser.set_image_topipe(_toInpaint)
+                diffuser.set_image_topipe(_toInpaint)
                 filename = os.path.normpath(_toInpaint.filename)
+
                 self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                         tag='DEBUG',
                                         msg=f'Processing: {filename.split(os.sep)[-1]}')
 
                 for mask in masks:
-                    pass
-                    #diffuser.set_mask(mask)
-                    #meta = diffuser.set_meta(inference_steps=30, guidance_scale=7.5)
-                    #synth_image = diffuser.do_inpaint()  # CORE BUSINESS
-                    #synth_image.save(synth_image.filename + 'ciao.jpg', pnginfo=meta)
+                    diffuser.set_mask(mask)
+                    meta = diffuser.set_meta(inference_steps=10, guidance_scale=8)
+                    synth_image = diffuser.do_inpaint()  # CORE BUSINESS
+                    self.save_image(synth_image, mask, str(masks.index(mask)), meta)
 
+                Logging.log_image(filename)
+
+            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                    tag='DEBUG',
+                                    msg=f'List processing Ended')
         except Exception as e:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
