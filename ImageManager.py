@@ -71,7 +71,7 @@ class ImageManager:
         """
         List all available images and create a log file
         """
-        with open('images_list.txt', 'a+') as file:
+        with open('images_list.txt', 'w') as file:
             for _file in os.listdir(self.in_path):
                 if self.is_image(os.path.join(self.in_path, _file)):
                     _inapp = os.path.join(self.in_path, _file)
@@ -83,7 +83,7 @@ class ImageManager:
                                 msg='ImagesList Created!')
 
     # TODO: choose a nomenclature for saving masks & ouputted images
-    def save_image(self, image: Image, metadata: PngInfo):
+    def save_image(self, image: Image, metadata: PngInfo, tag=''):
         """
         Shoot this as an event? - to run in a separate Thread, manage the creation of a folder for each image
         every folder containig the original image + the xyz synth images + xyz masks associated, each of them with the PngInfo
@@ -102,27 +102,29 @@ class ImageManager:
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Loading Image & Building masks: {filename}')
-        return im, filename, masks
+        return im, masks
 
-    def send_toPipe(self, model: str='SDV5', mask_size: int = 1024, n_masks: int = 1):
+    def send_toPipe(self, model: str = 'SDV5', mask_size: int = 1024, n_masks: int = 1):
         try:
-            diffuser = Diffusable.Diffusable(model, prompt='', negative_prompt='')
+            #diffuser = Diffusable.Diffusable(model, prompt='', negative_prompt='')
 
             while self.images_path:
                 self.mask_size = mask_size
                 self.n_masks = n_masks
 
-                _toInpaint, filename, masks = self.load_image()
-                diffuser.set_image_topipe(_toInpaint)
+                _toInpaint, masks = self.load_image()
+                #diffuser.set_image_topipe(_toInpaint)
+                filename = os.path.normpath(_toInpaint.filename)
                 self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                         tag='DEBUG',
-                                        msg=f'Processing: {filename}')
+                                        msg=f'Processing: {filename.split(os.sep)[-1]}')
 
                 for mask in masks:
-                    diffuser.set_mask(mask)
-                    meta = diffuser.set_meta(inference_steps=30, guidance_scale=7.5)
-                    synth_image = diffuser.do_inpaint()  # CORE BUSINESS
-                    synth_image.save(synth_image.filename + 'ciao.jpg', pnginfo=meta)
+                    pass
+                    #diffuser.set_mask(mask)
+                    #meta = diffuser.set_meta(inference_steps=30, guidance_scale=7.5)
+                    #synth_image = diffuser.do_inpaint()  # CORE BUSINESS
+                    #synth_image.save(synth_image.filename + 'ciao.jpg', pnginfo=meta)
 
         except Exception as e:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),

@@ -12,11 +12,10 @@ in output l'immagine su cui è stato fatto l'inpaiting ed i suoi metadati'''
 
 class Diffusable:
 
-    def __init__(self, model, negative_prompt=None, prompt=None):
-        self.model_path = model
+    def __init__(self, model_path, negative_prompt=None, prompt=None):
         self.prompt = prompt
         self.negative_prompt = negative_prompt
-        self.pipe = AutoPipelineForInpainting.from_pretrained(self.model_path,
+        self.pipe = AutoPipelineForInpainting.from_pretrained(model_path,
                                                               torch_dtype=torch.float16,
                                                               variant="fp16").to('cuda')
 
@@ -63,4 +62,4 @@ class Diffusable:
                                num_inference_steps=self.inference_steps,
                                guidance_scale=self.guidance_scale).images[0]
         else:
-            pass
+            print('whaat')
