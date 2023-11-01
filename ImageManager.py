@@ -81,23 +81,24 @@ class ImageManager:
                                 tag='DEBUG',
                                 msg='ImagesList Created!')
 
-    def save_image(self, image: Image, mask: Image, tag, metadata: PngInfo = None):
+    def save_image(self,orig: Image, synth: Image, mask: Image, tag, metadata: PngInfo = None):
         """
         Create a folder for each processed image, save each generated image + meta + relative mask
         """
-
-        filename = os.path.normpath(image.filename)
-        filename = filename.split(os.sep)[-1].replace('.jpg', '')
-
+        try:
+            filename = os.path.normpath(orig.filename)
+            filename = filename.split(os.sep)[-1].replace('.jpg', '')
+        except Exception as e:
+            filename = 'TEST'
         if os.path.isdir(os.path.join(self.out_path, filename)):
             tmp_out = os.path.join(self.out_path, filename)
             filename = filename + '_' + tag
-            image.save(os.path.join(tmp_out, filename + '.png'),
+            synth.save(os.path.join(tmp_out, filename + '.png'),
                        pnginfo=metadata)
             mask.save(os.path.join(tmp_out, filename + 'mask' + '.png'))
         else:
             os.mkdir(os.path.join(self.out_path, filename))
-            self.save_image(image, mask, tag, metadata)
+            self.save_image(orig, synth, mask, tag, metadata)
 
     def load_image(self):
         """
@@ -109,7 +110,7 @@ class ImageManager:
         im = Image.open(filename)
         """ONLY FOR DEBUG PURPOSES: RESIZE IMAGE"""
         aspect_ratio = im.height / im.width
-        _ToPipe = im.resize((1024, int(1024 * aspect_ratio)), Image.LANCZOS)
+        _ToPipe = im.resize((2048, int(2048 * aspect_ratio)), Image.LANCZOS)
         im = _ToPipe
         """END DEBUG"""
         masks = self.generate_masks(im)
@@ -128,7 +129,11 @@ class ImageManager:
 
                 _toInpaint, masks = self.load_image()
                 diffuser.set_image_topipe(_toInpaint)
-                filename = os.path.normpath(_toInpaint.filename)
+                #filename = 'x/TEST'
+                try:
+                    filename = os.path.normpath(_toInpaint.filename)
+                except:
+                    filename = 'X/TEST'
 
                 self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                         tag='DEBUG',
@@ -136,9 +141,9 @@ class ImageManager:
 
                 for mask in masks:
                     diffuser.set_mask(mask)
-                    meta = diffuser.set_meta(inference_steps=10, guidance_scale=8)
+                    meta = diffuser.set_meta(inference_steps=35, guidance_scale=7.5)
                     synth_image = diffuser.do_inpaint()  # CORE BUSINESS
-                    self.save_image(synth_image, mask, str(masks.index(mask)), meta)
+                    self.save_image(_toInpaint, synth_image, mask, str(masks.index(mask)), meta)
 
                 Logging.log_image(filename)
 
@@ -149,17 +154,6 @@ class ImageManager:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
                                     msg=f'Exception: {str(e)}')
-
-    def testingClass(self):
-        while self.images_path:
-            im, filename = self.load_image()
-            # im.show()
-            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
-                                    msg=f'PROCESSING: {filename}')
-            Logging.log_image(filename)
-
-        self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
-                                msg=f'List processing Ended!')
 
     def generate_masks(self, image: Image):
         """
@@ -189,7 +183,7 @@ class ImageManager:
             y1 = random.randint(0, image.size[1])
             x2 = random.randint(x1 + 1, image.size[0])
             y2 = random.randint(y1 + 1, image.size[1])
-            if (x2 - x1) * (y2 - y1) >= 1024 * 1024:
+            if (x2 - x1) * (y2 - y1) >= self.mask_size * self.mask_size:
                 return [x1, y1, x2, y2]
             else:
                 return get_random_coordinates()

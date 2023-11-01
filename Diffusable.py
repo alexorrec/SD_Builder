@@ -16,8 +16,9 @@ class Diffusable:
         self.prompt = prompt
         self.negative_prompt = negative_prompt
         self.pipe = AutoPipelineForInpainting.from_pretrained(model_path,
-                                                              torch_dtype=torch.float16,
-                                                              variant="fp16").to('cuda')
+                                                              #torch_dtype=torch.float16,
+                                                              variant="fp16").to('cpu')
+        #self.pipe.enable_model_cpu_offload()
 
         self.avaible_seeds: list[int] = [x for x in range(5000)]  # metto 5000 seeds a disposizione
         self.image_toPipe: Image = None
@@ -32,7 +33,7 @@ class Diffusable:
 
     def set_meta(self, inference_steps=35, guidance_scale=7.5):
         seed = self.generate_seed()
-        self.generator = torch.Generator(device='cuda').manual_seed(seed)
+        self.generator = torch.Generator(device='cpu').manual_seed(seed)
         self.inference_steps = inference_steps
         self.guidance_scale = guidance_scale
 
@@ -61,5 +62,6 @@ class Diffusable:
                                width=self.image_toPipe.width,
                                num_inference_steps=self.inference_steps,
                                guidance_scale=self.guidance_scale).images[0]
+            return _image
         else:
             print('whaat')
