@@ -1,4 +1,5 @@
 import os
+import string
 import random
 import Diffusable
 import Logging
@@ -15,18 +16,20 @@ class ImageManager:
         self.in_path: str = in_path
         self.out_path: str = out_path
         self.images_path: list[str] = list()
-
         """
-        Used attributes to compute masks and generate Pipeline
+        Image attributes
         """
+        self._resizer: bool = False
         self.mask_size: int = 2048
-        self.n_masks: int = 10
-        self.inpainted_images: list[Image] = list()
+        self.n_masks: int = 5
 
         self.logger = Logging.Logger()
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Input Path: {self.in_path}', msg2=f'Output Path: {self.out_path}')
+        """
+        Start Building image list
+        """
         self.build_list()
 
     def is_image(self, image_path):
@@ -81,24 +84,24 @@ class ImageManager:
                                 tag='DEBUG',
                                 msg='ImagesList Created!')
 
-    def save_image(self,orig: Image, synth: Image, mask: Image, tag, metadata: PngInfo = None):
+    def set_attributes(self, resize_image: bool = False, mask_size: int = 1024, n_masks=5):
+        self.mask_size = mask_size
+        self.n_masks = n_masks
+        self._resizer = resize_image
+
+    def save_image(self, filename: str, synth: Image, mask: Image, tag, metadata: PngInfo = None):
         """
         Create a folder for each processed image, save each generated image + meta + relative mask
         """
-        try:
-            filename = os.path.normpath(orig.filename)
-            filename = filename.split(os.sep)[-1].replace('.jpg', '')
-        except Exception as e:
-            filename = 'TEST'
         if os.path.isdir(os.path.join(self.out_path, filename)):
             tmp_out = os.path.join(self.out_path, filename)
             filename = filename + '_' + tag
-            synth.save(os.path.join(tmp_out, filename + '.png'),
-                       pnginfo=metadata)
-            mask.save(os.path.join(tmp_out, filename + 'mask' + '.png'))
+
+            synth.save(os.path.join(tmp_out, filename), pnginfo=metadata, format='png')
+            mask.save(os.path.join(tmp_out, filename + 'mask'), format='png')
         else:
             os.mkdir(os.path.join(self.out_path, filename))
-            self.save_image(orig, synth, mask, tag, metadata)
+            self.save_image(filename, synth, mask, tag, metadata)
 
     def load_image(self):
         """
@@ -108,52 +111,29 @@ class ImageManager:
         """
         filename = self.images_path.pop(0)
         im = Image.open(filename)
+
         """ONLY FOR DEBUG PURPOSES: RESIZE IMAGE"""
-        aspect_ratio = im.height / im.width
-        _ToPipe = im.resize((2048, int(2048 * aspect_ratio)), Image.LANCZOS)
-        im = _ToPipe
+        if self._resizer:
+            aspect_ratio = im.height / im.width
+            _ToPipe = im.resize((2048, int(2048 * aspect_ratio)), Image.LANCZOS)
+            im = _ToPipe
         """END DEBUG"""
+
         masks = self.generate_masks(im)
+
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Loading Image & Building masks: {filename}')
         return im, masks
 
-    def start_diffuse(self, model: str = 'SDV5', mask_size: int = 1024, n_masks: int = 1, prompt='', negative_prompt=''):
+    def get_filename(self, image: Image):
         try:
-            diffuser = Diffusable.Diffusable(model, prompt=prompt, negative_prompt=negative_prompt)
-
-            while self.images_path:
-                self.mask_size = mask_size
-                self.n_masks = n_masks
-
-                _toInpaint, masks = self.load_image()
-                diffuser.set_image_topipe(_toInpaint)
-                #filename = 'x/TEST'
-                try:
-                    filename = os.path.normpath(_toInpaint.filename)
-                except:
-                    filename = 'X/TEST'
-
-                self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
-                                        tag='DEBUG',
-                                        msg=f'Processing: {filename.split(os.sep)[-1]}')
-
-                for mask in masks:
-                    diffuser.set_mask(mask)
-                    meta = diffuser.set_meta(inference_steps=35, guidance_scale=7.5)
-                    synth_image = diffuser.do_inpaint()  # CORE BUSINESS
-                    self.save_image(_toInpaint, synth_image, mask, str(masks.index(mask)), meta)
-
-                Logging.log_image(filename)
-
-            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
-                                    tag='DEBUG',
-                                    msg=f'List processing Ended')
-        except Exception as e:
-            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
-                                    tag='ERROR',
-                                    msg=f'Exception: {str(e)}')
+            filename = os.path.normpath(image.filename)
+            filename = filename.split(os.sep)[-1].replace('.jpg', '')
+        except:
+            filename = 'NEW_' + random.choices(string.ascii_lowercase)
+        finally:
+            return filename
 
     def generate_masks(self, image: Image):
         """
@@ -203,3 +183,29 @@ class ImageManager:
                                     msg=f'Exception: {str(e)}')
         finally:
             return mask_batch
+
+    def __call__(self, diffuser: Diffusable):
+        try:
+            while self.images_path:
+                _toInpaint, masks = self.load_image()
+                diffuser.set_image_topipe(_toInpaint)
+
+                filename = self.get_filename(_toInpaint)
+                self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                        tag='DEBUG',
+                                        msg=f'Start Processing: {filename}')
+
+                for mask in masks:
+                    meta = diffuser.set_meta(mask)
+                    synth_image = diffuser()  # CORE BUSINESS
+                    self.save_image(filename, synth_image, mask, str(masks.index(mask)), meta)
+
+                Logging.log_image(filename)
+
+            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                    tag='DEBUG',
+                                    msg=f'List processing Ended')
+        except Exception as e:
+            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                    tag='ERROR',
+                                    msg=f'Exception: {str(e)}')
