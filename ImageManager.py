@@ -131,7 +131,7 @@ class ImageManager:
             filename = os.path.normpath(image.filename)
             filename = filename.split(os.sep)[-1].replace('.jpg', '')
         except:
-            filename = 'NEW_' + random.choices(string.ascii_lowercase)
+            filename = 'NEW_' + random.choices(string.ascii_lowercase)[0]
         finally:
             return filename
 

@@ -10,6 +10,7 @@ import Logging
 class Diffusable:
 
     def __init__(self, model_path):
+        torch.cuda.empty_cache()
         self.model = model_path
         self.hardware: str = ''
         self.pipe = None

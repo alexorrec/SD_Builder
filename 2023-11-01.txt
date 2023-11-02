@@ -1,0 +1,20 @@
+PROCESS STARTED @ 2023-11-01 15:12:32.413459 
+2023-11-01 15:12:32.414470 - MAIN TESTING
+2023-11-01 15:12:32.418472 - ImageManager.__init__ - DEBUG - Input Path: C:\Users\Alessandro\Desktop\IMAGES - Output Path: C:\Users\Alessandro\Desktop\SDV5_OUTPUT
+2023-11-01 15:12:32.422461 - ImageManager.build_list - ERROR - [Errno 2] No such file or directory: 'images_list.txt'
+2023-11-01 15:12:32.758417 - ImageManager.list_images - DEBUG - ImagesList Created!
+2023-11-01 15:13:00.198717 - ImageManager.load_image - DEBUG - Loading Image & Building masks: C:\Users\Alessandro\Desktop\IMAGES\D01_L1S4C2.jpg
+2023-11-01 15:13:00.209393 - ImageManager.__call__ - DEBUG - Start Processing: NEW_z
+PROCESS STARTED @ 2023-11-01 20:21:06.579801 
+2023-11-01 20:21:06.580800 - MAIN TESTING
+2023-11-01 20:21:06.585788 - ImageManager.__init__ - DEBUG - Input Path: C:\Users\Alessandro\Desktop\IMAGES - Output Path: C:\Users\Alessandro\Desktop\SDV5_OUTPUT
+2023-11-01 20:21:06.589803 - ImageManager.build_list - ERROR - None is not in list
+2023-11-01 20:21:06.926675 - ImageManager.list_images - DEBUG - ImagesList Created!
+2023-11-01 20:21:34.559421 - ImageManager.load_image - DEBUG - Loading Image & Building masks: C:\Users\Alessandro\Desktop\IMAGES\D01_L1S4C2.jpg
+2023-11-01 20:21:34.565375 - ImageManager.__call__ - DEBUG - Start Processing: NEW_y
+2023-11-02 00:10:46.504855 - ImageManager.load_image - DEBUG - Loading Image & Building masks: C:\Users\Alessandro\Desktop\IMAGES\D01_L1S4C3.jpg
+2023-11-02 00:10:46.929907 - ImageManager.__call__ - DEBUG - Start Processing: NEW_h
+2023-11-02 03:51:13.737606 - ImageManager.load_image - DEBUG - Loading Image & Building masks: C:\Users\Alessandro\Desktop\IMAGES\D01_L1S4C2.jpg
+2023-11-02 03:51:13.781696 - ImageManager.__call__ - DEBUG - Start Processing: NEW_x
+2023-11-02 07:31:04.836876 - ImageManager.load_image - DEBUG - Loading Image & Building masks: C:\Users\Alessandro\Desktop\IMAGES\D01_L1S4C3.jpg
+2023-11-02 07:31:04.935886 - ImageManager.__call__ - DEBUG - Start Processing: NEW_z
