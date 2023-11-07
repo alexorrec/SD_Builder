@@ -67,6 +67,7 @@ class ImageManager:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
                                     msg=str(e))
+            self.images_path.clear()
             self.list_images()
 
     def list_images(self):
@@ -124,11 +125,11 @@ class ImageManager:
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Loading Image & Building masks: {filename}')
-        return im, masks
+        return im, filename, masks
 
-    def get_filename(self, image: Image):
+    def get_filename(self, filename):
         try:
-            filename = os.path.normpath(image.filename)
+            filename = os.path.normpath(filename)
             filename = filename.split(os.sep)[-1].replace('.jpg', '')
         except:
             filename = 'NEW_' + random.choices(string.ascii_lowercase)[0]
@@ -187,10 +188,10 @@ class ImageManager:
     def __call__(self, diffuser: Diffusable):
         try:
             while self.images_path:
-                _toInpaint, masks = self.load_image()
+                _toInpaint, filepath, masks = self.load_image()
                 diffuser.set_image_topipe(_toInpaint)
 
-                filename = self.get_filename(_toInpaint)
+                filename = self.get_filename(filepath)
                 self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                         tag='DEBUG',
                                         msg=f'Start Processing: {filename}')

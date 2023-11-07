@@ -6,8 +6,6 @@ import sys
 import time
 
 # TODO: rivedere la gestione delle eccezioni
-# TODO: idea - creare una classe che gestisca le maschere, e creare una maschera, con uno specifico prompt?
-# TODO: controllare perchè il processo di generazione vede più immagini di quelle realmente presenti
 
 SDV5XL_INPAINT_MODEL_PATH = 'C:/Users/Alessandro/stable-diffusion-xl-1.0-inpainting-0.1/'
 
