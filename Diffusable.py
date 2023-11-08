@@ -28,7 +28,7 @@ class Diffusable:
 
         self.logger = Logging.Logger()
 
-    def set_model_hardware(self, hardware: str):
+    def set_model_hardware(self, hardware: str = None):
         self.hardware = hardware
         match hardware:
             case 'cuda':
