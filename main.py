@@ -11,7 +11,6 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     while not model_path:
         if os.getenv("SDV5XL") and not model_path:
             model_path = os.getenv("SDV5XL")
-
         else:
             model_path = input("Path to model: ")
 
