@@ -19,7 +19,7 @@ class ImageManager:
         """
         Image attributes
         """
-        self._resizer: bool = False
+        self._resizer: int = 8
         self.mask_size: int = 2048
         self.n_masks: int = 5
 
@@ -85,7 +85,7 @@ class ImageManager:
                                 tag='DEBUG',
                                 msg='ImagesList Created!')
 
-    def set_attributes(self, resize_image: bool = False, mask_size: int = 1024, n_masks=5):
+    def set_attributes(self, resize_image: int = 8, mask_size: int = 1024, n_masks=5):
         self.mask_size = mask_size
         self.n_masks = n_masks
         self._resizer = resize_image
@@ -114,9 +114,12 @@ class ImageManager:
         im = Image.open(filename)
 
         """ONLY FOR DEBUG PURPOSES: RESIZE IMAGE"""
-        if self._resizer:
+        if self._resizer != 0:
             aspect_ratio = im.height / im.width
-            _ToPipe = im.resize((4032, int(4032 * aspect_ratio)), Image.LANCZOS)
+            _new_ratio = im.width if im.width > im.height else im.height
+            _Of_res = int(_new_ratio/8 * self._resizer)
+
+            _ToPipe = im.resize((_Of_res, int(_Of_res * aspect_ratio)), Image.LANCZOS)
             im = _ToPipe
         """END DEBUG"""
 
@@ -198,6 +201,12 @@ class ImageManager:
 
                 for mask in masks:
                     meta = diffuser.set_meta(mask)
+
+                    self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                            tag='DEBUG',
+                                            msg=f'Start Processing: {filename}',
+                                            msg2=f'Masks: {masks.index(mask)}')
+
                     synth_image = diffuser()  # CORE BUSINESS
                     self.save_image(filename, synth_image, mask, str(masks.index(mask)), meta)
 
@@ -210,3 +219,4 @@ class ImageManager:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
                                     msg=f'Exception: {str(e)}')
+            print(e)

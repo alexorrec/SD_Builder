@@ -31,9 +31,9 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     _manager = ImageManager.ImageManager(out_path,
                                          in_path)
 
-    _manager.set_attributes(resize_image=True,
+    _manager.set_attributes(resize_image=5,
                             mask_size=1024,
-                            n_masks=5)
+                            n_masks=3)
 
     diffuser = Diffusable.Diffusable(model_path)
     diffuser.set_model_hardware(hardware)
