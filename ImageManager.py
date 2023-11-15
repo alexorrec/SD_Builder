@@ -98,8 +98,8 @@ class ImageManager:
             tmp_out = os.path.join(self.out_path, filename)
             filename = filename + '_' + tag
 
-            synth.save(os.path.join(tmp_out, filename), pnginfo=metadata, format='png')
-            mask.save(os.path.join(tmp_out, filename + 'mask'), format='png')
+            synth.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
+            mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
         else:
             os.mkdir(os.path.join(self.out_path, filename))
             self.save_image(filename, synth, mask, tag, metadata)
@@ -116,7 +116,7 @@ class ImageManager:
         """ONLY FOR DEBUG PURPOSES: RESIZE IMAGE"""
         if self._resizer:
             aspect_ratio = im.height / im.width
-            _ToPipe = im.resize((2048, int(2048 * aspect_ratio)), Image.LANCZOS)
+            _ToPipe = im.resize((4032, int(4032 * aspect_ratio)), Image.LANCZOS)
             im = _ToPipe
         """END DEBUG"""
 

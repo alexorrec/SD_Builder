@@ -32,7 +32,7 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
                                          in_path)
 
     _manager.set_attributes(resize_image=True,
-                            mask_size=512,
+                            mask_size=1024,
                             n_masks=5)
 
     diffuser = Diffusable.Diffusable(model_path)
@@ -41,7 +41,7 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     diffuser.tune_model(prompt='Florence city view, reinassance, italy, detailed, 8k, architecture, city of art, '
                                'snowy peaks mountain far in the background',
                         negative_prompt='nude, disfigured, cartoon',
-                        inference_steps=5,
+                        inference_steps=35,
                         guidance_scale=7.5)
 
     _manager(diffuser)
