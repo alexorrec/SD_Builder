@@ -88,7 +88,7 @@ class ImageManager:
     def set_attributes(self, resize_image: int = 8, mask_size: int = 1024, n_masks=5):
         self.mask_size = mask_size
         self.n_masks = n_masks
-        self._resizer = resize_image
+        self._resizer = resize_image if resize_image < 8 else 8
 
     def save_image(self, filename: str, synth: Image, mask: Image, tag, metadata: PngInfo = None):
         """
