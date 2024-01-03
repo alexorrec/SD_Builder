@@ -38,6 +38,9 @@ class Diffusable:
             case 'cpu':
                 self.pipe = AutoPipelineForInpainting.from_pretrained(self.model,
                                                                       variant="fp16").to('cpu')
+            case _ :
+                return None
+
 
     def tune_model(self, prompt=None, negative_prompt=None, inference_steps=35, guidance_scale=7.5):
         self.inference_steps = inference_steps

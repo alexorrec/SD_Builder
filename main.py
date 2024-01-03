@@ -28,13 +28,13 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
         hardware = input('Choosen Hardware: ')
     log.log_message(msg=f'Choosen Hardware: {hardware}')
 
-    res_step = int(input('Resize step: '))
+    crop_step = int(input('Crop step: '))
 
     _manager = ImageManager.ImageManager(out_path,
                                          in_path)
 
-    _manager.set_attributes(resize_image=res_step,
-                            mask_size=512,
+    _manager.set_attributes(_factor=crop_step,
+                            mask_size=1024,
                             n_masks=3)
 
     diffuser = Diffusable.Diffusable(model_path)

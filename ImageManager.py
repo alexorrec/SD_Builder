@@ -19,9 +19,11 @@ class ImageManager:
         """
         Image attributes
         """
-        self._resizer: int = 8
-        self.mask_size: int = 2048
+        self._factor: int = 8
+        self.mask_size: int = 1024
         self.n_masks: int = 5
+        self.crop_offset = None
+        self.full_image = None
 
         self.logger = Logging.Logger()
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
@@ -74,35 +76,45 @@ class ImageManager:
         """
         List all available images and create a log file
         """
-        with open('images_list.txt', 'w') as file:
-            for _file in os.listdir(self.in_path):
-                if self.is_image(os.path.join(self.in_path, _file)):
-                    _inapp = os.path.join(self.in_path, _file)
-                    self.images_path.append(_inapp)
-                    file.write(_inapp + "\n")
+
+        with open('images_list.txt', 'w') as file: # DA PROVARLA....
+            def rec_walk(directory):
+                content = os.listdir(directory)
+                for item in content:
+                    if os.path.isdir(item):
+                        rec_walk(item)
+                    elif self.is_image(item):
+                        _inapp = os.path.join(self.in_path, item)
+                        self.images_path.append(_inapp)
+                        file.write(_inapp + "\n")
+
+            rec_walk(self.in_path)
 
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg='ImagesList Created!')
 
-    def set_attributes(self, resize_image: int = 8, mask_size: int = 1024, n_masks=5):
+    def set_attributes(self, _factor: int = 8, mask_size: int = 1024, n_masks=5):
         self.mask_size = mask_size
         self.n_masks = n_masks
-        self._resizer = resize_image if resize_image < 8 else 8
+        self._factor = _factor if _factor < 8 else 8
 
     def save_image(self, filename: str, synth: Image, mask: Image, tag, metadata: PngInfo = None):
         """
         Create a folder for each processed image, save each generated image + meta + relative mask
         """
+
+        Image.Image.paste(self.full_image, synth, self.crop_offset) # Paste synth on original, with offset
+
         if os.path.isdir(os.path.join(self.out_path, filename)):
             tmp_out = os.path.join(self.out_path, filename)
             filename = filename + '_' + tag
 
-            synth.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
+            self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
             mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
         else:
             os.mkdir(os.path.join(self.out_path, filename))
-            self.save_image(filename, synth, mask, tag, metadata)
+            self.save_image(filename, self.full_image, mask, tag, metadata)
 
     def load_image(self):
         """
@@ -113,7 +125,17 @@ class ImageManager:
         filename = self.images_path.pop(0)
         im = Image.open(filename)
 
-        """ONLY FOR DEBUG PURPOSES: RESIZE IMAGE"""
+        crop_factor_w = int(im.width / 8 * self._factor)
+        crop_factor_h = int(im.height / 8 * self._factor)
+
+        self.crop_offset = ((im.width - crop_factor_w) // 2, (im.height - crop_factor_h) // 2,
+                       (im.width + crop_factor_w) // 2, (im.height + crop_factor_h) // 2)
+
+        #print(f"crop offset: {self.crop_offset}")
+
+        cropped = im.crop(self.crop_offset)
+        self.full_image = im
+        """
         if self._resizer != 0:
             aspect_ratio = im.height / im.width
             _new_ratio = im.width if im.width > im.height else im.height
@@ -121,14 +143,14 @@ class ImageManager:
 
             _ToPipe = im.resize((_Of_res, int(_Of_res * aspect_ratio)), Image.LANCZOS)
             im = _ToPipe
-        """END DEBUG"""
+        """
 
-        masks = self.generate_masks(im)
+        masks = self.generate_masks(cropped)
 
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Loading Image & Building masks: {filename}')
-        return im, filename, masks
+        return cropped, filename, masks
 
     def get_filename(self, filename):
         try:
@@ -192,6 +214,7 @@ class ImageManager:
         try:
             while self.images_path:
                 _toInpaint, filepath, masks = self.load_image()
+
                 diffuser.set_image_topipe(_toInpaint)
 
                 filename = self.get_filename(filepath)
