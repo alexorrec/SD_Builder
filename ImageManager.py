@@ -104,12 +104,11 @@ class ImageManager:
         Create a folder for each processed image, save each generated image + meta + relative mask
         """
 
-        Image.Image.paste(self.full_image, synth, self.crop_offset) # Paste synth on original, with offset
-
         if os.path.isdir(os.path.join(self.out_path, filename)):
             tmp_out = os.path.join(self.out_path, filename)
             filename = filename + '_' + tag
 
+            Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
             self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
             mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
         else:

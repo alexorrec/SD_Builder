@@ -39,3 +39,4 @@ for i in r:
 
 manager = IM.ImageManager('\\', '/Users/alessandrocerro/Desktop/Export_WEB')
 
+
