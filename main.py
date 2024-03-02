@@ -43,8 +43,8 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     diffuser.tune_model(prompt='Florence city view, reinassance, italy, detailed, 8k, architecture, city of art, '
                                'snowy peaks mountain far in the background',
                         negative_prompt='nude, disfigured, cartoon',
-                        inference_steps=35,
-                        guidance_scale=7.5)
+                        inference_steps=50,
+                        guidance_scale=7.5)  # SDXL TURBO TEST @ 0.0
 
     _manager(diffuser)
 

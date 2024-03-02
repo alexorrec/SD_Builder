@@ -60,7 +60,16 @@ class ImageManager:
         try:
             with open('images_list.txt', 'rb') as file:
                 self.images_path = file.read().decode().split()
+
             last_processed = self.logger.image_checkpoints
+
+            """START REGION - EXCLUDE FLAT, RETRIEVE LAST PROCESSED PATH"""
+            for _path in self.images_path:
+                if 'Flat' in _path or 'OnePlus':
+                    self.images_path.remove(_path)
+                elif last_processed in _path:
+                    last_processed = _path
+            """END REGION"""
             self.images_path = self.images_path[self.images_path.index(last_processed) + 1:]
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='DEBUG',
@@ -77,18 +86,23 @@ class ImageManager:
         List all available images and create a log file
         """
 
-        with open('images_list.txt', 'w') as file: # DA PROVARLA....
-            def rec_walk(directory):
-                content = os.listdir(directory)
-                for item in content:
-                    if os.path.isdir(item):
-                        rec_walk(item)
-                    elif self.is_image(item):
-                        _inapp = os.path.join(self.in_path, item)
-                        self.images_path.append(_inapp)
-                        file.write(_inapp + "\n")
+        with open('images_list.txt', 'w') as file:
+            def DFS(path):
+                stack = []
+                ret = []
+                stack.append(path)
+                while len(stack) > 0:
+                    tmp = stack.pop(len(stack) - 1)
+                    if os.path.isdir(tmp):
+                        ret.append(tmp)
+                        for item in os.listdir(tmp):
+                            stack.append(os.path.join(tmp, item))
+                    elif self.is_image(tmp):
+                        ret.append(tmp)
+                        self.images_path.append(tmp)
+                        file.write(tmp + "\n")
 
-            rec_walk(self.in_path)
+            DFS(self.in_path)
 
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
@@ -107,13 +121,20 @@ class ImageManager:
         if os.path.isdir(os.path.join(self.out_path, filename)):
             tmp_out = os.path.join(self.out_path, filename)
             filename = filename + '_' + tag
+            try:
+                Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
+                self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
 
-            Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
-            self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
-            mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
+                outer_mask = Image.new('RGB', self.full_image.size, 'black')
+                Image.Image.paste(outer_mask, mask, self.crop_offset)  # Paste synth on original, with offset
+                outer_mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
+            except Exception as e:
+                self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                        tag='DEBUG',
+                                        msg=f'WHAT?: {e}')
         else:
             os.mkdir(os.path.join(self.out_path, filename))
-            self.save_image(filename, self.full_image, mask, tag, metadata)
+            self.save_image(filename, synth, mask, tag, metadata)
 
     def load_image(self):
         """
@@ -121,6 +142,7 @@ class ImageManager:
         Generate the required number of masks, using the given size for each.
         :return: PIL Image, filename: str, PIL Masks
         """
+        self.full_image = None
         filename = self.images_path.pop(0)
         im = Image.open(filename)
 
@@ -128,21 +150,10 @@ class ImageManager:
         crop_factor_h = int(im.height / 8 * self._factor)
 
         self.crop_offset = ((im.width - crop_factor_w) // 2, (im.height - crop_factor_h) // 2,
-                       (im.width + crop_factor_w) // 2, (im.height + crop_factor_h) // 2)
+                            (im.width + crop_factor_w) // 2, (im.height + crop_factor_h) // 2)
 
-        #print(f"crop offset: {self.crop_offset}")
-
+        self.full_image = im.copy()
         cropped = im.crop(self.crop_offset)
-        self.full_image = im
-        """
-        if self._resizer != 0:
-            aspect_ratio = im.height / im.width
-            _new_ratio = im.width if im.width > im.height else im.height
-            _Of_res = int(_new_ratio/8 * self._resizer)
-
-            _ToPipe = im.resize((_Of_res, int(_Of_res * aspect_ratio)), Image.LANCZOS)
-            im = _ToPipe
-        """
 
         masks = self.generate_masks(cropped)
 
@@ -178,9 +189,9 @@ class ImageManager:
             c_w, c_h = image.size
             center_offset = ((c_w - self.mask_size) // 2, (c_h - self.mask_size) // 2,
                              (c_w + self.mask_size) // 2, (c_h + self.mask_size) // 2)
-            top_left_offset = (0, 0, self.mask_size, self.mask_size)
-            bottom_right_offset = (c_w - self.mask_size, c_h - self.mask_size,
-                                   c_w + self.mask_size, c_h + self.mask_size)
+            top_left_offset = (300, 300, self.mask_size + 300, self.mask_size + 300)
+            bottom_right_offset = (c_w - self.mask_size - 300, c_h - self.mask_size - 300,
+                                   c_w + self.mask_size - 300, c_h + self.mask_size - 300)
             return [top_left_offset, center_offset, bottom_right_offset]
 
         def get_random_coordinates():
