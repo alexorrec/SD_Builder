@@ -10,9 +10,9 @@ def get_caller_name() -> str:
     return currentframe().f_back.f_code.co_name
 
 
-def import_txt():
+def import_txt(folder: str = './Logs'):
     log_filename = str(datetime.now().date()) + '.txt'
-    with open(log_filename, 'a+') as file:
+    with open(os.path.join(folder, log_filename), 'a+') as file:
         file.write(f'PROCESS STARTED @ {datetime.now()} \n')
     return log_filename
 

@@ -18,7 +18,7 @@ class Diffusable:
         self.image_toPipe: Image = None
         self.image_mask: Image = None
 
-        self.available_seeds: list[int] = [x for x in range(5000)]  # metto 5000 seeds a disposizione
+        self.available_seeds: list[int] = [x for x in range(5000)]  # 5000 seeds
 
         self.prompt: str = ''
         self.negative_prompt: str = ''
@@ -34,7 +34,7 @@ class Diffusable:
             case 'cuda':
                 self.pipe = AutoPipelineForInpainting.from_pretrained(self.model,
                                                                       torch_dtype=torch.float16,
-                                                                      variant="fp16").to('cuda')
+                                                                      variant="fp16").to('cuda:1')
             case 'cpu':
                 self.pipe = AutoPipelineForInpainting.from_pretrained(self.model,
                                                                       variant="fp16").to('cpu')
@@ -54,7 +54,7 @@ class Diffusable:
         seed = self.generate_seed()
         self.generator = torch.Generator(device=self.hardware).manual_seed(seed)
 
-        self.image_mask = mask
+        self.image_mask = mask[0]
 
         meta = PngInfo()
         meta.add_text('seed', str(seed))
@@ -62,6 +62,7 @@ class Diffusable:
         meta.add_text('negative_prompt', self.negative_prompt)
         meta.add_text('inference_steps', str(self.inference_steps))
         meta.add_text('guidance_steps', str(self.guidance_scale))
+        meta.add_text('mask_offset_ofCrop', '#'.join(str(x) for x in mask[1]))
         return meta
 
     def set_image_topipe(self, image: Image):
@@ -83,6 +84,7 @@ class Diffusable:
             else:
                 raise AttributeError
         except Exception as e:
+            print(f'Pipe error generating: {e}')
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
                                     msg=f'Pipe: {e}')

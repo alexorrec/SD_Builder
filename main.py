@@ -31,24 +31,35 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     crop_step = int(input('Crop step: '))
 
     _manager = ImageManager.ImageManager(out_path,
-                                         in_path)
+                                         in_path,
+                                         folsize=True) # TESTING 27/04/24
 
     _manager.set_attributes(_factor=crop_step,
-                            mask_size=1024,
+                            mask_size=512,
                             n_masks=3)
 
     diffuser = Diffusable.Diffusable(model_path)
     diffuser.set_model_hardware(hardware)
 
-    diffuser.tune_model(prompt='Florence city view, reinassance, italy, detailed, 8k, architecture, city of art, '
-                               'snowy peaks mountain far in the background',
+    """
+    Actual used prompt:
+    Florence city view, reinassance, italy, 8k, architecture, city of art, 
+    italian architecture, realistic landscape photography, realistic colours, sharp details
+    """
+    diffuser.tune_model(prompt='Florence city view, reinassance, italy, architecture, city of art, '
+                               'italian architecture, realistic city photography, realistic colours, sharp details, photorealistic',
                         negative_prompt='nude, disfigured, cartoon',
                         inference_steps=50,
-                        guidance_scale=7.5)  # SDXL TURBO TEST @ 0.0
+                        guidance_scale=7.5)
 
     _manager(diffuser)
 
 
 if __name__ == '__main__':
-    main()
+    main(
+        model_path='/Prove/Cerro/models/stable-diffusion-2-inpainting',
+        in_path='/images/images/forensic_datasets/Container_Datasets/FloreView/Dataset',
+        out_path='/Prove/Cerro/Out_SIZE_v2',
+        hardware='cuda'
+    )
     # os.system('shutdown -s -t 20')
