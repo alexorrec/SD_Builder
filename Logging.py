@@ -14,16 +14,14 @@ def import_txt(folder: str = './Logs'):
     log_filename = str(datetime.now().date()) + '.txt'
     with open(os.path.join(folder, log_filename), 'a+') as file:
         file.write(f'PROCESS STARTED @ {datetime.now()} \n')
-    return log_filename
+    return os.path.join(folder, log_filename)  ## FIXED
 
 
 def import_last_processed():
     try:
         with open(images_log, 'rb') as file:
-            for line in file:
-                if line:
-                    _toret = line
-        return _toret.decode().replace('\n', '').replace('\r', '')
+            last_processed = file.read().decode().split()[-1]
+        return last_processed
     except Exception as e:
         print(e)
         return None

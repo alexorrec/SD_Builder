@@ -6,14 +6,16 @@ import Logging
 from PIL import Image, ImageDraw, ImageFilter
 from PIL.PngImagePlugin import PngInfo
 
-def check_path(path:str):
+
+def check_path(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
     return path
 
+
 class ImageManager:
 
-    def __init__(self, out_path: str, in_path: str = None, folsize = False):
+    def __init__(self, out_path: str, in_path: str = None, folsize=False):
         """
         Folder paths for retrieve given images
         """
@@ -29,7 +31,7 @@ class ImageManager:
         self.crop_offset = None
         self.full_image = None
 
-        self.logger = Logging.Logger()
+        self.logger: Logging = Logging.Logger()
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Input Path: {self.in_path}', msg2=f'Output Path: {self.out_path}')
@@ -41,8 +43,8 @@ class ImageManager:
         """
         SET SIZES FOLDERS: ENABLE?
         """
-        self._folsize = folsize
-        self._sizes = set()
+        self._folsize: bool = folsize
+        self._sizes: set = set()
 
     def is_image(self, image_path):
         """
@@ -79,7 +81,9 @@ class ImageManager:
                     self.images_path.remove(_path)
                 elif last_processed in _path:
                     last_processed = _path
+                    break
             """END REGION"""
+
             self.images_path = self.images_path[self.images_path.index(last_processed) + 1:]
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='DEBUG',
@@ -91,37 +95,31 @@ class ImageManager:
             self.images_path.clear()
             self.list_images()
 
-    def list_images(self, exist=False):
+    def list_images(self):
         """
         List all available images and create a log file
         """
-        if not exist:
-            with open('images_list.txt', 'w') as file:
-                def DFS(path):
-                    stack = []
-                    ret = []
-                    stack.append(path)
-                    while len(stack) > 0:
-                        tmp = stack.pop(len(stack) - 1)
-                        if os.path.isdir(tmp):
-                            ret.append(tmp)
-                            for item in os.listdir(tmp):
-                                stack.append(os.path.join(tmp, item))
-                        elif self.is_image(tmp):
-                            if 'Flat' not in tmp:
-                                ret.append(tmp)
-                                self.images_path.append(tmp)
-                                file.write(tmp + "\n")
+        with open('images_list.txt', 'w') as file:
+            def DFS(path):
+                stack = []
+                ret = []
+                stack.append(path)
+                while len(stack) > 0:
+                    tmp = stack.pop(len(stack) - 1)
+                    if os.path.isdir(tmp):
+                        ret.append(tmp)
+                        for item in os.listdir(tmp):
+                            stack.append(os.path.join(tmp, item))
+                    elif self.is_image(tmp):
+                        ret.append(tmp)
+                        self.images_path.append(tmp)
+                        file.write(tmp + "\n")
 
-                DFS(self.in_path)
+            DFS(self.in_path)
 
-
-            self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
-                                    tag='DEBUG',
-                                    msg='ImagesList Created!')
-        else:
-            with open('images_list.txt', 'rb') as file:
-                self.images_path = file.read().decode().split()
+        self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                tag='DEBUG',
+                                msg='ImagesList Created!')
 
     def set_attributes(self, _factor: int = 8, mask_size: int = 1024, n_masks=5):
         self.mask_size = mask_size
@@ -137,7 +135,8 @@ class ImageManager:
                 tmp_out = os.path.join(self.out_path, filename)
                 filename = filename + '_' + tag
                 try:
-                    metadata.add_text('crop_area', '#'.join(str(x) for x in self.crop_offset)) # Later used for patch identification
+                    metadata.add_text('crop_area',
+                                      '#'.join(str(x) for x in self.crop_offset))  # Later used for patch identification
                     Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
                     self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
 
@@ -150,7 +149,7 @@ class ImageManager:
                                             msg=f'Error saving {filename}: {e}')
                     print(f'Error saving {filename}: {e}')
             else:
-                os.mkdir(os.path.join(self.out_path, filename)) # Create folder and repeat!
+                os.mkdir(os.path.join(self.out_path, filename))  # Create folder and repeat!
                 self.save_image(filename, synth, mask, tag, metadata)
         else:
             """SAME SIZES CROPS, UNDER SAME FOLDER - FOR DETECTION PURPOSES"""
@@ -171,15 +170,13 @@ class ImageManager:
                                         msg=f'Error saving {filename}: {ex}')
                 print(f'Error saving {filename}: {ex}')
 
-
-    def ensure_divisible(self, n:int):
+    def ensure_divisible(self, n: int):
         if n % 8 == 0:
             return n
         else:
             while n % 8 != 0:
                 n += 1
             return n
-
 
     def load_image(self):
         """
@@ -280,7 +277,7 @@ class ImageManager:
                 print(f'Start Processing: {filename}')
 
                 for mask in masks:
-                    meta = diffuser.set_meta(mask) #  and set mask
+                    meta = diffuser.set_meta(mask)  # and set mask
 
                     self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                             tag='DEBUG',

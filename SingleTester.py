@@ -33,14 +33,25 @@ for i in r:
 
 """
 
-img_list = '/data/lesc/users/cerro/script/SD_Builder/images_list.txt'
-processed_img = '/data/lesc/users/cerro/script/SD_Builder/processed_images.txt'
+img_list = 'images_list.txt'
+processed_img = 'processed_images.txt'
 
-with open(img_list, 'rb') as to_do:
-    print(f'IMAGE LIST{len(to_do.readlines())}')
 
-with open(processed_img, 'rb') as do:
-    print(f'processed LIST{len(do.readlines())}')
 
+with open('images_list.txt', 'rb') as file:
+    images_path = file.read().decode().split()
+
+with open('processed_images.txt', 'rb') as file:
+    last_processed = file.read().decode().split()[-1]
+print(last_processed)
+"""START REGION - EXCLUDE FLAT, RETRIEVE LAST PROCESSED PATH"""
+for _path in images_path:
+    if 'Flat' in _path:
+        images_path.remove(_path)
+    elif last_processed in _path:
+        last_processed = _path
+        break
+
+print(last_processed)
 
 
