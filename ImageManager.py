@@ -44,7 +44,7 @@ class ImageManager:
         SET SIZES FOLDERS: ENABLE?
         """
         self._folsize: bool = folsize
-        self._sizes: set = set()
+        # self._sizes: set = set()
 
     def is_image(self, image_path):
         """
@@ -92,8 +92,11 @@ class ImageManager:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
                                     msg=str(e))
-            self.images_path.clear()
-            self.list_images()
+            if not self.images_path:
+                self.images_path.clear()
+                self.list_images()
+            else:
+                print('LIST RETRIEVED! - STARTING PROCESS')
 
     def list_images(self):
         """
@@ -143,6 +146,10 @@ class ImageManager:
                     outer_mask = Image.new('RGB', self.full_image.size, 'black')
                     Image.Image.paste(outer_mask, mask, self.crop_offset)  # Paste synth on original respect to offset
                     outer_mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
+
+                    self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
+                                            tag='DEBUG',
+                                            msg=f'SAVED IN : {os.path.join(tmp_out, filename + '.png')}')
                 except Exception as e:
                     self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                             tag='DEBUG',
@@ -157,12 +164,12 @@ class ImageManager:
             # No need to save mask, just cropped image
             try:
                 folder_name = str(synth.size).replace(' ', '').replace(',', 'x')
-                if synth.size in self._sizes:
+                if os.path.exists(os.path.join(self.out_path, folder_name)):
                     synth.save(os.path.join(self.out_path, os.path.join(folder_name, filename + tag + '.png')),
                                pnginfo=metadata, format='png')
                 else:
                     os.mkdir(os.path.join(self.out_path, folder_name))
-                    self._sizes.add(synth.size)
+                    # self._sizes.add(synth.size)
                     self.save_image(filename, synth, mask, tag, metadata)
             except Exception as ex:
                 self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
@@ -193,6 +200,12 @@ class ImageManager:
 
         self.crop_offset = ((im.width - crop_factor_w) // 2, (im.height - crop_factor_h) // 2,
                             (im.width + crop_factor_w) // 2, (im.height + crop_factor_h) // 2)
+
+        # TODO: REMOVE
+        """ TEMPORARY OVERRIDE
+        w, h = im.size
+        self.crop_offset = ( (w - 3024)//2 , (h - 2000)//2, (w + 3024)//2, (h + 2000)//2)
+         TEMPORARY OVERRIDE """
 
         self.full_image = im.copy()
         cropped = im.crop(self.crop_offset)
@@ -234,7 +247,8 @@ class ImageManager:
             top_left_offset = (300, 300, self.mask_size + 300, self.mask_size + 300)
             bottom_right_offset = (c_w - self.mask_size - 300, c_h - self.mask_size - 300,
                                    c_w - 300, c_h - 300)
-            return [center_offset, top_left_offset, bottom_right_offset]
+            # TODO: RESTORE MASKS
+            return [center_offset] #, top_left_offset, bottom_right_offset]
 
         def get_random_coordinates():
             x1 = random.randint(0, image.size[0])

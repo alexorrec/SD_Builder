@@ -24,19 +24,21 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
         out_path = input('Output Path: ')
     log.log_message(msg=f'Output Path: {out_path}')
 
-    while not hardware == 'cuda' or hardware == 'cpu':
+    """
+    while 'cuda' not in hardware  or 'cpu' not in hardware:
         hardware = input('Choosen Hardware: ')
+    """
     log.log_message(msg=f'Choosen Hardware: {hardware}')
 
     crop_step = int(input('Crop step: '))
 
     _manager = ImageManager.ImageManager(out_path,
                                          in_path,
-                                         folsize=True) # TESTING 27/04/24
+                                         folsize=False) # TESTING 27/04/24
 
     _manager.set_attributes(_factor=crop_step,
                             mask_size=512,
-                            n_masks=3)
+                            n_masks=1)
 
     diffuser = Diffusable.Diffusable(model_path)
     diffuser.set_model_hardware(hardware)
@@ -49,7 +51,7 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     diffuser.tune_model(prompt='Florence city view, reinassance, italy, architecture, city of art, '
                                'italian architecture, realistic city photography, realistic colours, sharp details, photorealistic',
                         negative_prompt='nude, disfigured, cartoon',
-                        inference_steps=50,
+                        inference_steps=35,
                         guidance_scale=7.5)
 
     _manager(diffuser)
@@ -57,9 +59,9 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
 
 if __name__ == '__main__':
     main(
-        model_path='/Prove/Cerro/models/stable-diffusion-2-inpainting',
+        model_path='/Prove/Cerro/models/stable-diffusion-xl-1.0-inpainting-0.1',
         in_path='/images/images/forensic_datasets/Container_Datasets/FloreView/Dataset',
-        out_path='/Prove/Cerro/Out_SIZE_v2',
-        hardware='cuda'
+        out_path='/Prove/Cerro/OUT_XL',
+        hardware='cuda:1'
     )
     # os.system('shutdown -s -t 20')

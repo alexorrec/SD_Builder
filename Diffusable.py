@@ -1,9 +1,10 @@
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from diffusers import AutoPipelineForInpainting
+from diffusers import AutoPipelineForInpainting, UniPCMultistepScheduler
 import torch.cuda
 import random
-
+import gc
+from accelerate import PartialState
 import Logging
 
 
@@ -30,6 +31,15 @@ class Diffusable:
 
     def set_model_hardware(self, hardware: str = None):
         self.hardware = hardware
+
+        self.pipe = AutoPipelineForInpainting.from_pretrained(self.model,
+                                                              torch_dtype=torch.float16,
+                                                              variant="fp16")
+        self.pipe.scheduler = UniPCMultistepScheduler.from_config(self.pipe.scheduler.config)
+        self.pipe.to(hardware)
+        self.pipe.enable_vae_tiling()
+        self.pipe.enable_xformers_memory_efficient_attention()
+        """
         match hardware:
             case 'cuda':
                 self.pipe = AutoPipelineForInpainting.from_pretrained(self.model,
@@ -40,6 +50,7 @@ class Diffusable:
                                                                       variant="fp16").to('cpu')
             case _:
                 return None
+        """
 
     def tune_model(self, prompt=None, negative_prompt=None, inference_steps=35, guidance_scale=7.5):
         self.inference_steps = inference_steps
@@ -52,7 +63,7 @@ class Diffusable:
 
     def set_meta(self, mask):
         seed = self.generate_seed()
-        self.generator = torch.Generator(device=self.hardware).manual_seed(seed)
+        self.generator = torch.Generator(device='cuda:1').manual_seed(seed) # Not device='cuda' in generator means 'cpu'
 
         self.image_mask = mask[0]
 
@@ -70,6 +81,9 @@ class Diffusable:
 
     def __call__(self):
         try:
+            torch.cuda.empty_cache()
+            gc.collect()
+
             if self.generator:
                 _image = self.pipe(prompt=self.prompt,
                                    negative_prompt=self.negative_prompt,
@@ -79,7 +93,8 @@ class Diffusable:
                                    height=self.image_toPipe.height,
                                    width=self.image_toPipe.width,
                                    num_inference_steps=self.inference_steps,
-                                   guidance_scale=self.guidance_scale).images[0]
+                                   guidance_scale=self.guidance_scale,
+                                   num_images_per_prompt=1).images[0]
                 return _image
             else:
                 raise AttributeError

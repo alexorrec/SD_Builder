@@ -2,6 +2,8 @@ from PIL.PngImagePlugin import PngInfo
 from PIL import Image
 import random
 import os
+import shutil
+
 
 """
 image = Image.open('DJI_0499-TESTING.jpg')
@@ -31,7 +33,7 @@ for i in r:
     Image.Image.paste(image, inverted_image, crop_offset)
     image.show()
 
-"""
+
 
 img_list = 'images_list.txt'
 processed_img = 'processed_images.txt'
@@ -44,7 +46,7 @@ with open('images_list.txt', 'rb') as file:
 with open('processed_images.txt', 'rb') as file:
     last_processed = file.read().decode().split()[-1]
 print(last_processed)
-"""START REGION - EXCLUDE FLAT, RETRIEVE LAST PROCESSED PATH"""
+
 for _path in images_path:
     if 'Flat' in _path:
         images_path.remove(_path)
@@ -54,4 +56,23 @@ for _path in images_path:
 
 print(last_processed)
 
+def copy_images(imgs, out_folder):
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
 
+    for image_path in imgs:
+
+        filename = os.path.basename(image_path)
+
+        destination_path = os.path.join(out_folder, filename)
+
+        shutil.copy2(image_path, destination_path)
+        print(f"Image '{filename}' copied to '{out_folder}'")
+
+with open('images_list.txt', 'rb') as file:
+    images = file.read().decode().split()
+
+out = '/Prove/Cerro/REALS'
+
+copy_images(images, out)
+"""
