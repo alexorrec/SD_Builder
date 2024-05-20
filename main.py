@@ -46,11 +46,9 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     """
     Actual used prompt:
     Florence city view, reinassance, italy, 8k, architecture, city of art, 
-    italian architecture, realistic landscape photography, realistic colours, sharp details
+    italian architecture, realistic landscape photography, realistic colours, sharp details, photorealistic
     """
-    diffuser.tune_model(prompt='Florence city view, reinassance, italy, architecture, city of art, '
-                               'italian architecture, realistic city photography, realistic colours, sharp details, photorealistic',
-                        negative_prompt='nude, disfigured, cartoon',
+    diffuser.tune_model(negative_prompt='nude, disfigured, cartoon',
                         inference_steps=35,
                         guidance_scale=7.5)
 
@@ -59,9 +57,9 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
 
 if __name__ == '__main__':
     main(
-        model_path='/Prove/Cerro/models/stable-diffusion-xl-1.0-inpainting-0.1',
-        in_path='/images/images/forensic_datasets/Container_Datasets/FloreView/Dataset',
-        out_path='/Prove/Cerro/OUT_XL',
+        model_path='/Prove/Cerro/models/stable-diffusion-2-inpainting',
+        in_path='/Prove/Cerro/REALS',
+        out_path='/Prove/Cerro/OUT_V2_CLIP',
         hardware='cuda:1'
     )
     # os.system('shutdown -s -t 20')

@@ -140,16 +140,18 @@ class ImageManager:
                 try:
                     metadata.add_text('crop_area',
                                       '#'.join(str(x) for x in self.crop_offset))  # Later used for patch identification
-                    Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
-                    self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
+                    #Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
+                    #self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
+                    synth.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
 
                     outer_mask = Image.new('RGB', self.full_image.size, 'black')
-                    Image.Image.paste(outer_mask, mask, self.crop_offset)  # Paste synth on original respect to offset
-                    outer_mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
+                    #Image.Image.paste(outer_mask, mask, self.crop_offset)  # Paste synth on original respect to offset
+                    #outer_mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
+                    mask.save(os.path.join(tmp_out, filename + 'mask.png'), format='png')
 
                     self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                             tag='DEBUG',
-                                            msg=f'SAVED IN : {os.path.join(tmp_out, filename + '.png')}')
+                                            msg=f'SAVED IN : {os.path.join(tmp_out, filename)}')
                 except Exception as e:
                     self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                             tag='DEBUG',
@@ -208,14 +210,14 @@ class ImageManager:
          TEMPORARY OVERRIDE """
 
         self.full_image = im.copy()
-        cropped = im.crop(self.crop_offset)
+        # cropped = im.crop(self.crop_offset)
 
-        masks = self.generate_masks(cropped)
+        masks = self.generate_masks(im)
 
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg=f'Loading Image & Building masks: {filename}')
-        return cropped, filename, masks
+        return im.copy(), filename, masks
 
     def get_filename(self, filename):
         try:

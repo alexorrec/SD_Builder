@@ -4,8 +4,8 @@ from diffusers import AutoPipelineForInpainting, UniPCMultistepScheduler
 import torch.cuda
 import random
 import gc
-from accelerate import PartialState
 import Logging
+from clip_interrogator import Config, Interrogator
 
 
 class Diffusable:
@@ -67,6 +67,7 @@ class Diffusable:
 
         self.image_mask = mask[0]
 
+        self.prompt = self.clip_me()
         meta = PngInfo()
         meta.add_text('seed', str(seed))
         meta.add_text('prompt', self.prompt)
@@ -103,3 +104,8 @@ class Diffusable:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',
                                     msg=f'Pipe: {e}')
+
+    def clip_me(self):
+        ci = Interrogator(Config(clip_model_name="ViT-L-14/openai"))
+        clip = ci.interrogate(self.image_toPipe)
+        return clip
