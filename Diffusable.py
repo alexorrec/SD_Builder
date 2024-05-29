@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageChops
 from PIL.PngImagePlugin import PngInfo
 from diffusers import AutoPipelineForInpainting, UniPCMultistepScheduler
 import torch.cuda
@@ -19,7 +19,7 @@ class Diffusable:
         self.image_toPipe: Image = None
         self.image_mask: Image = None
 
-        self.available_seeds: list[int] = [x for x in range(5000)]  # 5000 seeds
+        self.available_seeds: list[int] = [x for x in range(10000)]  # 10000 seeds
 
         self.prompt: str = ''
         self.negative_prompt: str = ''
@@ -63,11 +63,12 @@ class Diffusable:
 
     def set_meta(self, mask):
         seed = self.generate_seed()
-        self.generator = torch.Generator(device='cuda:1').manual_seed(seed) # Not device='cuda' in generator means 'cpu'
+        self.generator = torch.Generator(device='cuda:0').manual_seed(seed) # Not device='cuda' in generator means 'cpu'
 
         self.image_mask = mask[0]
 
-        self.prompt = self.clip_me()
+        self.prompt = self.clip_me(self.image_mask) # TODO REMOVE MASK IF MODEL NOT V2
+
         meta = PngInfo()
         meta.add_text('seed', str(seed))
         meta.add_text('prompt', self.prompt)
@@ -105,7 +106,15 @@ class Diffusable:
                                     tag='ERROR',
                                     msg=f'Pipe: {e}')
 
-    def clip_me(self):
-        ci = Interrogator(Config(clip_model_name="ViT-L-14/openai"))
-        clip = ci.interrogate(self.image_toPipe)
+    def clip_me(self, mask=None):
+        to_clip = self.image_toPipe
+        print('CLIP INTERROGATOR...')
+        ci = Interrogator(Config(clip_model_name="ViT-L-14/openai", quiet=True))
+
+        if mask:
+            bbox = mask.getbbox()
+            to_clip = self.image_toPipe.crop(bbox)
+
+        clip = ci.interrogate(to_clip)
+        print(clip)
         return clip

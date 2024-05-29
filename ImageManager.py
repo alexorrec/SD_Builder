@@ -25,7 +25,7 @@ class ImageManager:
         """
         Image attributes
         """
-        self._factor: int = 8
+        self._factor: int = 0
         self.mask_size: int = 1024
         self.n_masks: int = 5
         self.crop_offset = None
@@ -73,13 +73,11 @@ class ImageManager:
             with open('images_list.txt', 'rb') as file:
                 self.images_path = file.read().decode().split()
 
-            last_processed = self.logger.image_checkpoints
+            last_processed: str = self.logger.image_checkpoints
 
             """START REGION - EXCLUDE FLAT, RETRIEVE LAST PROCESSED PATH"""
             for _path in self.images_path:
-                if 'Flat' in _path:
-                    self.images_path.remove(_path)
-                elif last_processed in _path:
+                if last_processed in _path and last_processed:
                     last_processed = _path
                     break
             """END REGION"""
@@ -118,13 +116,13 @@ class ImageManager:
                         self.images_path.append(tmp)
                         file.write(tmp + "\n")
 
+            print('GENERATING LIST...')
             DFS(self.in_path)
-
         self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                 tag='DEBUG',
                                 msg='ImagesList Created!')
 
-    def set_attributes(self, _factor: int = 8, mask_size: int = 1024, n_masks=5):
+    def set_attributes(self, _factor: int = 0, mask_size: int = 1024, n_masks=5):
         self.mask_size = mask_size
         self.n_masks = n_masks
         self._factor = _factor
@@ -138,8 +136,7 @@ class ImageManager:
                 tmp_out = os.path.join(self.out_path, filename)
                 filename = filename + '_' + tag
                 try:
-                    metadata.add_text('crop_area',
-                                      '#'.join(str(x) for x in self.crop_offset))  # Later used for patch identification
+                    #metadata.add_text('crop_area', '#'.join(str(x) for x in self.crop_offset))  # Later used for patch identification
                     #Image.Image.paste(self.full_image, synth, self.crop_offset)  # Paste synth on original, with offset
                     #self.full_image.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
                     synth.save(os.path.join(tmp_out, filename + '.png'), pnginfo=metadata, format='png')
@@ -197,11 +194,12 @@ class ImageManager:
         filename = self.images_path.pop(0)
         im = Image.open(filename).convert('RGB')
 
-        crop_factor_w = self.ensure_divisible(int(im.width / 8 * self._factor))
-        crop_factor_h = self.ensure_divisible(int(im.height / 8 * self._factor))
+        if self._factor != 0:
+            crop_factor_w = self.ensure_divisible(int(im.width / 8 * self._factor))
+            crop_factor_h = self.ensure_divisible(int(im.height / 8 * self._factor))
 
-        self.crop_offset = ((im.width - crop_factor_w) // 2, (im.height - crop_factor_h) // 2,
-                            (im.width + crop_factor_w) // 2, (im.height + crop_factor_h) // 2)
+            self.crop_offset = ((im.width - crop_factor_w) // 2, (im.height - crop_factor_h) // 2,
+                                (im.width + crop_factor_w) // 2, (im.height + crop_factor_h) // 2)
 
         # TODO: REMOVE
         """ TEMPORARY OVERRIDE
@@ -249,8 +247,7 @@ class ImageManager:
             top_left_offset = (300, 300, self.mask_size + 300, self.mask_size + 300)
             bottom_right_offset = (c_w - self.mask_size - 300, c_h - self.mask_size - 300,
                                    c_w - 300, c_h - 300)
-            # TODO: RESTORE MASKS
-            return [center_offset] #, top_left_offset, bottom_right_offset]
+            return [center_offset , top_left_offset, bottom_right_offset]
 
         def get_random_coordinates():
             x1 = random.randint(0, image.size[0])
@@ -266,11 +263,13 @@ class ImageManager:
 
         try:
             for offset in static_Sqare_masks():
-                mask_batch.append((generate_mask(offset, image.size), offset))
+                mask_batch.append( (generate_mask(offset, image.size), offset) )
 
             if self.n_masks > 3:
                 for i in range(self.n_masks - 3):
-                    mask_batch.append(generate_mask(get_random_coordinates(), image.size))
+                    offset = get_random_coordinates()
+                    mask_batch.append( (generate_mask(offset, image.size), offset) )
+
         except Exception as e:
             self.logger.log_message(caller=self.__class__.__name__ + '.' + Logging.get_caller_name(),
                                     tag='ERROR',

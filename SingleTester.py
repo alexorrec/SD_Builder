@@ -1,5 +1,5 @@
 from PIL.PngImagePlugin import PngInfo
-from PIL import Image
+from PIL import Image, ImageChops
 import random
 import os
 import shutil
@@ -75,4 +75,15 @@ with open('images_list.txt', 'rb') as file:
 out = '/Prove/Cerro/REALS'
 
 copy_images(images, out)
+
+
+im = Image.open('D02_L4S2C2.jpeg_0.png')
+mask = Image.open('D02_L4S2C2.jpeg_0mask.png')
+
+
+bbox = mask.getbbox()
+
+
+cropped = im.crop(bbox)
+cropped.show('cropped')
 """
