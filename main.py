@@ -47,6 +47,7 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     Florence city view, reinassance, italy, 8k, architecture, city of art, 
     italian architecture, realistic landscape photography, realistic colours, sharp details, photorealistic
     """
+
     diffuser.tune_model(negative_prompt='nude, disfigured, cartoon',
                         inference_steps=40,
                         guidance_scale=7.5)
