@@ -249,6 +249,7 @@ class ImageManager:
                                    c_w - 300, c_h - 300)
             return [center_offset , top_left_offset, bottom_right_offset]
 
+
         def get_random_coordinates():
             x1 = random.randint(0, image.size[0])
             y1 = random.randint(0, image.size[1])
@@ -262,11 +263,13 @@ class ImageManager:
         mask_batch: list = list()
 
         try:
+            """
+            TEMPORARY DISABLED
             for offset in static_Sqare_masks():
                 mask_batch.append( (generate_mask(offset, image.size), offset) )
-
-            if self.n_masks > 3:
-                for i in range(self.n_masks - 3):
+            """
+            if self.n_masks > len(mask_batch):
+                for i in range(self.n_masks - len(mask_batch)):
                     offset = get_random_coordinates()
                     mask_batch.append( (generate_mask(offset, image.size), offset) )
 

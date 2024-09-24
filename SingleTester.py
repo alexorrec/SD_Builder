@@ -3,7 +3,7 @@ from PIL import Image, ImageChops
 import random
 import os
 import shutil
-
+import shutil as sh
 
 """
 image = Image.open('DJI_0499-TESTING.jpg')
@@ -87,3 +87,79 @@ bbox = mask.getbbox()
 cropped = im.crop(bbox)
 cropped.show('cropped')
 """
+"""
+lines = []
+with open('images_list_full.txt', 'rb') as file:
+    lines = file.read().decode().split()
+
+print(len(lines))
+
+for line in lines.copy():
+    if 'Flat' in line:
+        lines.remove(line)
+
+first_batch = random.sample(lines, 500)
+
+for s in first_batch:
+    lines.remove(s)
+second_batch = random.sample(lines, 500)
+
+for s in second_batch:
+    lines.remove(s)
+
+reals_batch = random.sample(lines, 1000)
+
+for s in reals_batch:
+    lines.remove(s)
+
+prediction = random.sample(lines, 500)
+
+with open('first_batch.txt', 'w') as file:
+    for l in first_batch:
+        file.write(l + '\n')
+
+with open('second_batch.txt', 'w') as file:
+    for l in second_batch:
+        file.write(l + '\n')
+
+with open('reals_batch.txt', 'w') as file:
+    for l in reals_batch:
+        file.write(l + '\n')
+
+with open('prediction.txt', 'w') as file:
+    for l in prediction:
+        file.write(l + '\n')
+
+#########################################
+with open('prediction.txt', 'rb') as file:
+    paths = file.read().decode().split()
+
+random.shuffle(paths)
+
+with open('images_list.txt', 'w') as file:
+    tmp = random.sample(paths, 250)
+    for l in tmp:
+        paths.remove(l)
+        file.write(l + '\n')
+
+with open('to_copy.txt', 'w') as file:
+    print(f'TO REALS: {len(paths)}')
+    for l in paths:
+        file.write(l + '\n')
+"""
+
+AI_destination = '/Prove/Cerro/TO_PREDICT/AI/'
+REAL_destination = '/Prove/Cerro/TO_PREDICT/REALS/'
+
+with open('to_copy.txt', 'rb') as file:
+    paths = file.read().decode().split()
+
+for p in paths:
+    try:
+        sh.copy2(p, REAL_destination)
+        print(f'{os.path.basename(p)} COPIED')
+    except Exception as e:
+        print(f'NOT COPIED: {p}')
+
+print(f'COPIED: {len(os.listdir(REAL_destination))} ORIGINAL IMAGES')
+

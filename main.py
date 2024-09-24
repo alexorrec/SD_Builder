@@ -36,8 +36,8 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
                                          in_path,
                                          folsize=False)
 
-    _manager.set_attributes(mask_size=512,
-                            n_masks=5)
+    _manager.set_attributes(mask_size=1024,
+                            n_masks=1)
 
     diffuser = Diffusable.Diffusable(model_path)
     diffuser.set_model_hardware(hardware)
@@ -48,7 +48,7 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
     italian architecture, realistic landscape photography, realistic colours, sharp details, photorealistic
     """
     diffuser.tune_model(negative_prompt='nude, disfigured, cartoon',
-                        inference_steps=35,
+                        inference_steps=40,
                         guidance_scale=7.5)
 
     _manager(diffuser)
@@ -56,8 +56,8 @@ def main(model_path: str = None, in_path: str = None, out_path: str = None, hard
 
 if __name__ == '__main__':
     main(
-        model_path='/Prove/Cerro/models/stable-diffusion-2-inpainting',
+        model_path='/Prove/Cerro/models/stable-diffusion-xl-1.0-inpainting-0.1',
         in_path='/images/images/forensic_datasets/Container_Datasets/FloreView/Dataset/',
-        out_path='/Prove/Cerro/V2_INPAINTED',
-        hardware='cuda:0'
+        out_path='/Prove/Cerro/TO_PREDICT/AI',
+        hardware='cuda:1'
     )
